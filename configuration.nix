@@ -137,6 +137,7 @@ programs.neovim = {
 home-manager.users.hubert = {pkgs, ...}: {
 	home.packages = with pkgs; [
 		git
+		gh
 	];	
 	home.stateVersion = "25.05";
 	home.file.".config/nvim".source = pkgs.fetchFromGitHub {
