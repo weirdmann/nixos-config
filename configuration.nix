@@ -89,11 +89,12 @@ in
   programs.firefox.enable = true;
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
+  programs.zsh.enable = true;
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
-    #vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
+    vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
     wget
   ];
 
@@ -113,38 +114,45 @@ programs.neovim = {
 
   # Enable the OpenSSH daemon.
    services.openssh.enable = true;
+   # Enable the Tailscale 
+   services.tailscale.enable = true;
+   services.tailscale.useRoutingFeatures = "both";
 
-  # Open ports in the firewall.
-  # networking.firewall.allowedTCPPorts = [ ... ];
-  # networking.firewall.allowedUDPPorts = [ ... ];
-  # Or disable the firewall altogether.
-  # networking.firewall.enable = false;
 
-  # This value determines the NixOS release from which the default
-  # settings for stateful data, like file locations and database versions
-  # on your system were taken. It‘s perfectly fine and recommended to leave
-  # this value at the release version of the first install of this system.
-  # Before changing this value read the documentation for this option
-  # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
+
   system.stateVersion = "25.05"; # Did you read the comment?
 
   users.users.hubert = {
     isNormalUser = true;
     description = "Hubert";
     extraGroups = [ "networkmanager" "wheel" ];
+    shell = pkgs.zsh;
   };
 
-home-manager.users.hubert = {pkgs, ...}: {
+home-manager.users.hubert = {config, pkgs, ...}: {
 	home.packages = with pkgs; [
 		git
 		gh
+    	gnumake
+    fzf
+taskwarrior
+ripgrep
+starship
 	];	
 	home.stateVersion = "25.05";
-	home.file.".config/nvim".source = pkgs.fetchFromGitHub {
-		owner 	= "weirdmann";
-		repo 	= "nvim-lazy";
-		rev	= "main";
-		sha256 	= "sha256-+IAC10OLJEUXKHh4u4R8qg+fOG2cgDAnzSx0l2Sluv4=";
-	};
+
+
+  home.file.".dotfiles".source = builtins.fetchGit {
+    url = "https://github.com/weirdmann/dotfiles";
+  };
+
+  home.file.".zshrc".source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.dotfiles/.zshrc";
+  home.file.".zsh/fzf-tab".source = builtins.fetchGit {
+	url = "https://github.com/Aloxaf/fzf-tab";
+};
+  home.file."${config.home.homeDirectory}/nix/home-manager/config/neovim".source = builtins.fetchGit {
+    url = "https://github.com/weirdmann/nvim-lazy";
+  };
+  home.file.".config/nvim".source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix/home-manager/config/neovim";
 }; 
 }
